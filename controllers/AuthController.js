@@ -1,15 +1,25 @@
 const jwt = require('jsonwebtoken');
+const db = require('../database/connection');
 
 const secret = process.env.SECRET;
 
 const auth = async (req, res) => {
-    // console.log(req.body);
-    const payload = {
-        name: req.body.username,
-        exp: Date.now() + 60 * 10 * 1000
-    };
-    const token = jwt.sign(payload, secret);
-    return res.status(200).json({ access_token: token });
+    const result = db.login(req.body.username, req.body.password).then((user) => {
+        console.log(user);
+        if (user.length > 0) {
+            const payload = {
+                name: req.body.username,
+                exp: Date.now() + 60 * 10 * 1000
+            };
+            const token = jwt.sign(payload, secret);
+            return res.status(200).json({
+                error: false,
+                message: "Sesión iniciada", user: user[0], access_token: token
+            });
+        } else {
+            return res.status(200).json({ message: 'Usuario o contraseña incorretos, intente nuevamente!', error: true });
+        }
+    });
 }
 
 const public = async (req, res) => {
